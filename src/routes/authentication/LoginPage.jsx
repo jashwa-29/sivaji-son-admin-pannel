@@ -35,7 +35,7 @@ const LoginPage = () => {
       if (role === "admin") {
         navigate("/admin/managestaff"); // Redirect to admin dashboard
       } else {
-        navigate("/"); // Redirect to staff attendance page
+        navigate("/staff"); // Redirect to staff attendance page
       }
     } else {
       alert("Please enter both username and password.");
