@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaTimes } from "react-icons/fa"; // Icons for close
 import { useNavigate } from "react-router-dom"; // For navigation
 
-const StaffAttendencePage = () => {
+const StaffattendancePage = () => {
   const navigate = useNavigate(); // Hook for navigation
 
   const [staff, setStaff] = useState([
@@ -19,7 +19,7 @@ const StaffAttendencePage = () => {
   const closeModal = () => setModal({ type: "", isOpen: false, staff: null });
 
   const handleViewDetails = (staffId) => {
-    navigate(`/admin/monthlyattendence`); // Navigate to the monthly attendance page
+    navigate(`/admin/monthlyattendance`); // Navigate to the monthly attendance page
   };
 
   return (
@@ -160,4 +160,4 @@ const StaffAttendencePage = () => {
   );
 };
 
-export default StaffAttendencePage;
+export default StaffattendancePage;

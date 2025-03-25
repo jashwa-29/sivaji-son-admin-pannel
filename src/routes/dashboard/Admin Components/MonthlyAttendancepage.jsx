@@ -16,7 +16,7 @@ const MonthlyAttendancePage = () => {
   const [selectedMonth, setSelectedMonth] = useState("01");
   const [selectedYear, setSelectedYear] = useState("2025");
 
-  const handleBack = () => navigate("/");
+  const handleBack = () => navigate("/admin/staffattendance");
 
   const filteredData = attendanceData.filter((item) => {
     const [day, month, year] = item.date.split("-");
@@ -65,11 +65,23 @@ const MonthlyAttendancePage = () => {
           </div>
         </div>
 
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center mb-5">
+          <div className="flex justify-around">
+            <div className="text-sm font-medium">Total Days: {filteredData.length}</div>
+            <div className="text-sm font-medium text-green-600 dark:text-green-400">
+              Present: {filteredData.filter((item) => item.status === "Present").length}
+            </div>
+            <div className="text-sm font-medium text-red-600 dark:text-red-400">
+              Absent: {filteredData.filter((item) => item.status === "Absent").length}
+            </div>
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full border border-gray-200 dark:border-gray-700 text-center">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th className="p-3">#</th>
+                <th className="p-3">S.no</th>
                 <th className="p-3">Date</th>
                 <th className="p-3">Status</th>
               </tr>
@@ -104,17 +116,7 @@ const MonthlyAttendancePage = () => {
           </table>
         </div>
 
-        <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
-          <div className="flex justify-around">
-            <div className="text-sm font-medium">Total Days: {filteredData.length}</div>
-            <div className="text-sm font-medium text-green-600 dark:text-green-400">
-              Present: {filteredData.filter((item) => item.status === "Present").length}
-            </div>
-            <div className="text-sm font-medium text-red-600 dark:text-red-400">
-              Absent: {filteredData.filter((item) => item.status === "Absent").length}
-            </div>
-          </div>
-        </div>
+       
       </div>
     </div>
   );

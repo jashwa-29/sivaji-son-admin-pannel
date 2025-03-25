@@ -1,6 +1,6 @@
 import { useTheme } from "@/hooks/use-theme";
-import { Bell, ChevronsLeft, Moon, Search, Sun, LogOut } from "lucide-react";
-import profileImg from "@/assets/profile-image.jpg";
+import { Bell, ChevronsLeft, Moon,  Sun, LogOut } from "lucide-react";
+
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 

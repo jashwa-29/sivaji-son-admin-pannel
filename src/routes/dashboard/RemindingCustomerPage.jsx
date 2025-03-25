@@ -42,7 +42,7 @@ const RemindingCustomerPage = () => {
     <div className="min-h-screen p-6 max-w-6xl mx-auto">
       <div className="dark:bg-gray-900 dark:text-white bg-gray-50 p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-          Customers to Notify for Tomorrow Travel
+          Customers to Notify for Tomorrow 
         </h2>
 
         {/* Customer Table */}

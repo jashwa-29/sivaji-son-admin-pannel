@@ -1,11 +1,5 @@
 import { 
-    ChartColumn, 
-    Home, 
-    NotepadText, 
-    UserPlus, 
-    Settings, 
-    FileText,
-    Users,
+
     CalendarCheck,
     ClipboardList,
     Bell,

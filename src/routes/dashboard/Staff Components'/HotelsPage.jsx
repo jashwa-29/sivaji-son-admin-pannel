@@ -1,32 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const HotelsPage = () => {
-  // State for each input field
-  const [bookingId, setBookingId] = useState("");
-  const [hotelName, setHotelName] = useState("");
-  const [numberOfNights, setNumberOfNights] = useState("");
-  const [checkInDate, setCheckInDate] = useState("");
-  const [checkOutDate, setCheckOutDate] = useState("");
-  const [hcn, setHcn] = useState("");
-  const [hotelContactPerson, setHotelContactPerson] = useState("");
+  // State for form fields
+  const [formData, setFormData] = useState({
+    bookingId: "",
+    hotelName: "",
+    numberOfNights: "",
+    checkInDate: "",
+    checkOutDate: "",
+    hcn: "",
+    hotelContactPerson: ""
+  });
 
-  // State for error messages
+  // State for recent bookings
+  const [recentBookings, setRecentBookings] = useState([]);
   const [errors, setErrors] = useState({});
-
-  // State for confirmation popup
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validation function
+  // Load recent bookings from localStorage
+  useEffect(() => {
+    const savedBookings = localStorage.getItem("hotelBookings");
+    if (savedBookings) {
+      setRecentBookings(JSON.parse(savedBookings));
+    }
+  }, []);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle date input click
+  const handleDateClick = (fieldName) => {
+    document.getElementById(fieldName).showPicker();
+  };
+
+  // Form validation
   const validateForm = () => {
     const newErrors = {};
-
-    if (!bookingId) newErrors.bookingId = "Booking ID is required";
-    if (!hotelName) newErrors.hotelName = "Hotel Name is required";
-    if (!numberOfNights) newErrors.numberOfNights = "Number of Nights is required";
-    if (!checkInDate) newErrors.checkInDate = "Check-in Date is required";
-    if (!checkOutDate) newErrors.checkOutDate = "Check-out Date is required";
-    if (!hcn) newErrors.hcn = "HCN is required";
-    if (!hotelContactPerson) newErrors.hotelContactPerson = "Hotel Contact Person is required";
+    if (!formData.bookingId.trim()) newErrors.bookingId = "Booking ID is required";
+    if (!formData.hotelName.trim()) newErrors.hotelName = "Hotel Name is required";
+    if (!formData.numberOfNights) newErrors.numberOfNights = "Number of Nights is required";
+    if (!formData.checkInDate) newErrors.checkInDate = "Check-in Date is required";
+    if (!formData.checkOutDate) newErrors.checkOutDate = "Check-out Date is required";
+    if (!formData.hcn.trim()) newErrors.hcn = "HCN is required";
+    if (!formData.hotelContactPerson.trim()) newErrors.hotelContactPerson = "Hotel Contact Person is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -35,168 +71,469 @@ const HotelsPage = () => {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     if (validateForm()) {
-      // Show confirmation popup
       setShowConfirmation(true);
-    } else {
-      console.log("Form has errors. Please fix them.");
     }
+    setIsSubmitting(false);
   };
 
   // Handle confirmation
   const handleConfirmation = (confirmed) => {
-    if (confirmed) {
-      // Form is valid and confirmed, proceed with submission
-      console.log("Form submitted successfully!");
-      // Add your submission logic here (e.g., API call)
-    }
-    // Close the confirmation popup
     setShowConfirmation(false);
+    
+    if (confirmed) {
+      setIsSubmitting(true);
+      
+      // Simulate API call
+      setTimeout(() => {
+        // Save to recent bookings
+        const newBooking = {
+          ...formData,
+          id: Date.now(),
+          createdAt: new Date().toISOString()
+        };
+        
+        const updatedBookings = [newBooking, ...recentBookings].slice(0, 5);
+        setRecentBookings(updatedBookings);
+        localStorage.setItem("hotelBookings", JSON.stringify(updatedBookings));
+        
+        // Reset form
+        setFormData({
+          bookingId: "",
+          hotelName: "",
+          numberOfNights: "",
+          checkInDate: "",
+          checkOutDate: "",
+          hcn: "",
+          hotelContactPerson: ""
+        });
+        
+        setIsSubmitting(false);
+      }, 1500);
+    }
+  };
+
+  // Fill form with recent booking
+  const useRecentBooking = (booking) => {
+    setFormData({
+      bookingId: booking.bookingId,
+      hotelName: booking.hotelName,
+      numberOfNights: booking.numberOfNights,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      hcn: booking.hcn,
+      hotelContactPerson: booking.hotelContactPerson
+    });
+  };
+
+  // Handle delete booking
+  const handleDeleteBooking = (bookingId) => {
+    setBookingToDelete(bookingId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteBooking = (confirmed) => {
+    setShowDeleteConfirmation(false);
+    
+    if (confirmed) {
+      const updatedBookings = recentBookings.filter(booking => booking.id !== bookingToDelete);
+      setRecentBookings(updatedBookings);
+      localStorage.setItem("hotelBookings", JSON.stringify(updatedBookings));
+    }
+    
+    setBookingToDelete(null);
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-lg border border-gray-200 dark:bg-gray-900 dark:border-gray-700">
-      <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-5">Hotel Booking Details</h2>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Form Card */}
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-green-600">Hotel Booking Details</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Please fill in all the required details
+            </p>
+          </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Booking ID */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Booking ID</label>
-          <input
-            type="text"
-            value={bookingId}
-            onChange={(e) => setBookingId(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.bookingId ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter Booking ID"
-          />
-          {errors.bookingId && <p className="text-red-500 text-sm mt-1">{errors.bookingId}</p>}
-        </div>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Booking ID */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Booking ID <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="bookingId"
+                value={formData.bookingId}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                  errors.bookingId 
+                    ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                    : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                placeholder="Enter Booking ID"
+              />
+              {errors.bookingId && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.bookingId}
+                </p>
+              )}
+            </div>
 
-        {/* Hotel Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Hotel Name</label>
-          <input
-            type="text"
-            value={hotelName}
-            onChange={(e) => setHotelName(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.hotelName ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter Hotel Name"
-          />
-          {errors.hotelName && <p className="text-red-500 text-sm mt-1">{errors.hotelName}</p>}
-        </div>
+            {/* Hotel Name */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Hotel Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="hotelName"
+                value={formData.hotelName}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                  errors.hotelName 
+                    ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                    : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                placeholder="Enter Hotel Name"
+              />
+              {errors.hotelName && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.hotelName}
+                </p>
+              )}
+            </div>
 
-        {/* No. of Nights */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">No. of Nights</label>
-          <input
-            type="number"
-            value={numberOfNights}
-            onChange={(e) => setNumberOfNights(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.numberOfNights ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter Number of Nights"
-          />
-          {errors.numberOfNights && <p className="text-red-500 text-sm mt-1">{errors.numberOfNights}</p>}
-        </div>
+            {/* No. of Nights */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                No. of Nights <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="numberOfNights"
+                value={formData.numberOfNights}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                  errors.numberOfNights 
+                    ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                    : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                placeholder="Enter Number of Nights"
+              />
+              {errors.numberOfNights && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.numberOfNights}
+                </p>
+              )}
+            </div>
 
-        {/* Check-in Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Check-in Date</label>
-          <input
-            type="date"
-            value={checkInDate}
-            onChange={(e) => setCheckInDate(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.checkInDate ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.checkInDate && <p className="text-red-500 text-sm mt-1">{errors.checkInDate}</p>}
-        </div>
+            {/* Check-in Date */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Check-in Date <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="checkInDate"
+                  name="checkInDate"
+                  value={formData.checkInDate}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                    errors.checkInDate 
+                      ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                      : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                />
+                <div 
+                  className="absolute inset-0 cursor-pointer"
+                  onClick={() => handleDateClick("checkInDate")}
+                ></div>
+                {formData.checkInDate && (
+                  <div className="absolute right-3 top-3 text-gray-500 dark:text-gray-400 pointer-events-none">
+                    {formatDate(formData.checkInDate)}
+                  </div>
+                )}
+              </div>
+              {errors.checkInDate && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.checkInDate}
+                </p>
+              )}
+            </div>
 
-        {/* Check-out Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Check-out Date</label>
-          <input
-            type="date"
-            value={checkOutDate}
-            onChange={(e) => setCheckOutDate(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.checkOutDate ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.checkOutDate && <p className="text-red-500 text-sm mt-1">{errors.checkOutDate}</p>}
-        </div>
+            {/* Check-out Date */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Check-out Date <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="checkOutDate"
+                  name="checkOutDate"
+                  value={formData.checkOutDate}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                    errors.checkOutDate 
+                      ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                      : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                  } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                />
+                <div 
+                  className="absolute inset-0 cursor-pointer"
+                  onClick={() => handleDateClick("checkOutDate")}
+                ></div>
+                {formData.checkOutDate && (
+                  <div className="absolute right-3 top-3 text-gray-500 dark:text-gray-400 pointer-events-none">
+                    {formatDate(formData.checkOutDate)}
+                  </div>
+                )}
+              </div>
+              {errors.checkOutDate && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.checkOutDate}
+                </p>
+              )}
+            </div>
 
-        {/* HCN */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">HCN</label>
-          <input
-            type="text"
-            value={hcn}
-            onChange={(e) => setHcn(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.hcn ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter HCN"
-          />
-          {errors.hcn && <p className="text-red-500 text-sm mt-1">{errors.hcn}</p>}
-        </div>
+            {/* HCN */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                HCN <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="hcn"
+                value={formData.hcn}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                  errors.hcn 
+                    ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                    : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                placeholder="Enter HCN"
+              />
+              {errors.hcn && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.hcn}
+                </p>
+              )}
+            </div>
 
-        {/* Hotel Contact Person */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Hotel Contact Person</label>
-          <input
-            type="text"
-            value={hotelContactPerson}
-            onChange={(e) => setHotelContactPerson(e.target.value)}
-            className={`mt-1 w-full px-4 py-2 border rounded-lg text-gray-700 dark:text-white dark:bg-gray-800 focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-              errors.hotelContactPerson ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="Enter Contact Person's Name"
-          />
-          {errors.hotelContactPerson && <p className="text-red-500 text-sm mt-1">{errors.hotelContactPerson}</p>}
-        </div>
+            {/* Hotel Contact Person */}
+            <div className="md:col-span-2 space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Hotel Contact Person <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="hotelContactPerson"
+                value={formData.hotelContactPerson}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all ${
+                  errors.hotelContactPerson 
+                    ? "border-red-500 focus:ring-red-300 dark:focus:ring-red-700" 
+                    : "border-gray-300 dark:border-gray-600 focus:border-green-600 focus:ring-green-200 dark:focus:ring-green-800"
+                } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                placeholder="Enter Contact Person's Name"
+              />
+              {errors.hotelContactPerson && (
+                <p className="text-red-500 text-sm mt-1 flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.hotelContactPerson}
+                </p>
+              )}
+            </div>
 
-        {/* Submit Button */}
-        <div className="md:col-span-2 flex justify-end">
-          <button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-300"
-          >
-            Submit
-          </button>
-        </div>
-      </form>
-
-      {/* Confirmation Popup */}
-      {showConfirmation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Confirm Submission</h3>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Are you sure you want to submit the form?</p>
-            <div className="mt-4 flex justify-end gap-3">
+            {/* Submit Button */}
+            <div className="md:col-span-2 flex justify-end mt-4">
               <button
-                onClick={() => handleConfirmation(false)}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg"
+                type="submit"
+                disabled={isSubmitting}
+                className={`px-6 py-3 rounded-lg font-semibold text-white transition-all duration-300 flex items-center justify-center ${
+                  isSubmitting
+                    ? "bg-green-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg"
+                } min-w-[150px]`}
               >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleConfirmation(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-              >
-                Confirm
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </div>
-          </div>
+          </form>
+
+          {/* Confirmation Popup */}
+          {showConfirmation && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center mb-4">
+                  <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full mr-3">
+                    <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Confirm</h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Are you sure you want to submit this hotel booking? Please verify all details before confirmation.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => handleConfirmation(false)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleConfirmation(true)}
+                    className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Recent Bookings Card */}
+        {recentBookings.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 className="text-2xl font-bold text-green-600 mb-6">Recent Bookings</h3>
+            <div className="space-y-4">
+              {recentBookings.map((booking) => (
+                <div 
+                  key={booking.id} 
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition relative"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteBooking(booking.id);
+                    }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  
+                  <div 
+                    className="cursor-pointer"
+                    onClick={() => useRecentBooking(booking)}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          <span className="text-green-600">Booking ID:</span> {booking.bookingId}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-green-600">Hotel:</span> {booking.hotelName}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-green-600">Nights:</span> {booking.numberOfNights}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-green-600">HCN:</span> {booking.hcn}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-green-600">Contact:</span> {booking.hotelContactPerson}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="text-green-600">Check-in:</span> {formatDate(booking.checkInDate)}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="text-green-600">Check-out:</span> {formatDate(booking.checkOutDate)}
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
+                      Created: {formatDate(booking.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Popup */}
+        {showDeleteConfirmation && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center mb-4">
+                <div className="bg-red-100 dark:bg-red-900 p-2 rounded-full mr-3">
+                  <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Delete Booking</h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Are you sure you want to delete this booking? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => confirmDeleteBooking(false)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => confirmDeleteBooking(true)}
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
