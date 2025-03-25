@@ -16,7 +16,7 @@ import {
   export const navbarLinks = {
       staff: [
           {
-              title: "Dashboard",
+              title: "Staff Panel",
               links: [
                   { label: "Attendance Page", icon: CalendarCheck, path: "/staff/attendance" },
                   {
