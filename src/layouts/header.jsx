@@ -1,17 +1,16 @@
 import { useTheme } from "@/hooks/use-theme";
-import { Bell, ChevronsLeft, Moon, Search, Sun } from "lucide-react";
+import { Bell, ChevronsLeft, Moon, Search, Sun, LogOut } from "lucide-react";
 import profileImg from "@/assets/profile-image.jpg";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import { useNavigate } from "react-router-dom";
 
 export const Header = ({ collapsed, setCollapsed }) => {
     const { theme, setTheme } = useTheme();
-    const navigate = useNavigate(); // Hook for navigation
+    const navigate = useNavigate();
 
-    // Logout function
     const handleLogout = () => {
-        localStorage.removeItem("userRole"); // Clear the user's role from localStorage
-        navigate("/login"); // Redirect to the login page
+        localStorage.removeItem("userRole");
+        navigate("/login");
     };
 
     return (
@@ -42,14 +41,11 @@ export const Header = ({ collapsed, setCollapsed }) => {
                     <Bell size={20} />
                 </button>
                 <button
-                    className="size-10 overflow-hidden rounded-full"
-                    onClick={handleLogout} // Add onClick handler for logout
+                    className="btn-ghost flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800"
+                    onClick={handleLogout}
                 >
-                    <img
-                        src={profileImg}
-                        alt="profile image"
-                        className="size-full object-cover"
-                    />
+                    <LogOut size={18} />
+                    <span>Logout</span>
                 </button>
             </div>
         </header>
