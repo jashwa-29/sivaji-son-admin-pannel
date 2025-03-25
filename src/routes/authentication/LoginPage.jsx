@@ -45,7 +45,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="dark:bg-gray-800 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6 dark:text-white">ogin</h1>
+        <h1 className="text-2xl font-bold text-center mb-6 dark:text-white">login</h1>
         <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label htmlFor="role" className="block text-sm font-medium mb-2 dark:text-gray-300">
