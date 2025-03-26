@@ -16,14 +16,20 @@ const FlightsPage = lazy(() => import("@/routes/dashboard/Staff Components'/Flig
 const HotelsPage = lazy(() => import("@/routes/dashboard/Staff Components'/HotelsPage"));
 
 // Protected Route Component
-const ProtectedRoute = ({children, allowedRoles}) => {
-  const userRole = localStorage.getItem('userRole');
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const userRole = localStorage.getItem('userRole'); // Ensure role is stored correctly
+  console.log("Current User Role:", userRole); // Debugging log
+
   if (!userRole) {
+    console.log("No user role found. Redirecting to login.");
     return <Navigate to="/login" replace />;
   }
+
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
+    console.log("User role not allowed. Redirecting to home.");
+    return <Navigate to="/login" replace />;
   }
+
   return children;
 };
 
@@ -36,7 +42,7 @@ function App() {
     {
       path: '/staff',
       element: (
-        <ProtectedRoute allowedRoles={['staff', 'admin']}>
+        <ProtectedRoute allowedRoles={['staff']}>
           <Layout />
         </ProtectedRoute>
       ),
@@ -72,7 +78,7 @@ function App() {
     },
     {
       path: '/',
-      element: <Navigate to="/staff/attendance" replace />,
+      element: <Navigate to="/login" replace />,
     },
   ]);
 
