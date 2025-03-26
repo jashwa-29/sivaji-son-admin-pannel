@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const LoginPage = () => {
-  const navigate = useNavigate(); // Hook for navigation
-
+  const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
   });
-
-  const [role, setRole] = useState("staff"); // Default role
+  const [error, setError] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -19,50 +18,48 @@ const LoginPage = () => {
     });
   };
 
-  const handleRoleChange = (e) => {
-    setRole(e.target.value);
-  };
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     // Basic validation
-    if (credentials.username && credentials.password) {
-      // Store user role in localStorage
-      localStorage.setItem("userRole", role);
+    if (!credentials.username || !credentials.password) {
+      setError("Please enter both username and password.");
+      return;
+    }
 
-      // Redirect based on role
-      if (role === "admin") {
-        navigate("/admin/managestaff"); // Redirect to admin dashboard
+    try {
+      const response = await axios.post("http://192.168.1.38:8080/login", credentials);
+      
+      if (response.data && response.data.role) {
+        // Store user role and any other relevant data in localStorage
+        localStorage.setItem("userRole", response.data.role);
+        localStorage.setItem("token", response.data.token); // if using JWT
+        localStorage.setItem("userData", JSON.stringify(response.data.user)); // if there's additional user data
+
+        // Redirect based on role
+        if (response.data.role === "admin") {
+          navigate("/admin/managestaff");
+        } else {
+          navigate("/staff");
+        }
       } else {
-        navigate("/staff"); // Redirect to staff attendance page
+        setError("Invalid response from server");
       }
-    } else {
-      alert("Please enter both username and password.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="dark:bg-gray-800 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6 dark:text-white">login</h1>
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label htmlFor="role" className="block text-sm font-medium mb-2 dark:text-gray-300">
-              Role
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={role}
-              onChange={handleRoleChange}
-              className="w-full p-3 text-black dark:text-white dark:bg-gray-700 dark:border-gray-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              required
-            >
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
+        <h1 className="text-2xl font-bold text-center mb-6 dark:text-white">Login</h1>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
           </div>
+        )}
+        <form onSubmit={handleLogin}>
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium mb-2 dark:text-gray-300">
               Username
